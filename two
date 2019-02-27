@@ -1,0 +1,101 @@
+#include <FEHLCD.h>
+#include <FEHIO.h>
+#include <FEHUtility.h>
+#include <FEHMotor.h>
+#include <FEHRPS.h>
+#include <FEHServo.h>
+//Declarations for encoders & motors
+DigitalEncoder right_encoder(FEHIO::P0_0);
+DigitalEncoder left_encoder(FEHIO::P2_7);
+FEHMotor right_motor(FEHMotor::Motor1,9.0);
+FEHMotor left_motor(FEHMotor::Motor0,9.0);
+AnalogInputPin cds (FEHIO::P1_7);
+//FEHServo clawServo(FEHIO::Servo7);
+void move_forward(int percent, int counts) //using encoders
+{
+    //Reset encoder counts
+    right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+
+    //Set both motors to desired percent
+    right_motor.SetPercent(percent);
+    left_motor.SetPercent(percent);
+
+    //While the average of the left and right encoder is less than counts,
+    //keep running motors
+    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts);
+
+    //Turn off motors
+    right_motor.Stop();
+    left_motor.Stop();
+}
+void turn(int leftPercent, int rightPercent, int counts) {
+    //Reset encoder counts
+    right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+
+    //Set both motors to desired percent
+    right_motor.SetPercent(rightPercent);
+    left_motor.SetPercent(leftPercent);
+
+    //While the average of the left and right encoder is less than counts,
+    //keep running motors
+    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts);
+
+    //Turn off motors
+    right_motor.Stop();
+    left_motor.Stop();
+}
+
+
+int main(void)
+{
+
+    int motor_percent = 25; //Input power level here
+    int expected_counts =206 ; //Input theoretical counts here
+
+    float x, y; //for touch screen
+
+    //Initialize the screen
+    LCD.Clear(BLACK);
+    LCD.SetFontColor(WHITE);
+    LCD.WriteLine("The CDS Value is:");
+    LCD.Write(cds.Value());
+    LCD.WriteLine("Shaft Encoder Exploration Test");
+    LCD.WriteLine("Touch the screen");
+    while(!LCD.Touch(&x,&y)); //Wait for screen to be pressed
+    while(LCD.Touch(&x,&y));
+    while(cds.Value()){//Wait for screen to be unpressed
+     if(cds.Value()<3.2){
+        //move forward 3 inches 
+         move_forward(motor_percent,expected_counts);
+         //turn 45 degrees 
+         int leftPercent=0;
+         int rightPercent=25;
+         expected_counts=117;
+         turn(leftPercent, rightPercent,expected_counts);
+         //move 7 inches
+         expected_counts=246;
+         move_forward(motor_percent,expected_counts);
+         //reading values function and reversing into button function(esther) 
+         //90 degree turn: counts: 234.74: if this is too much, half it. also half the 45 degree turn. 
+         //move backward for 4 inches: motor percent: 25, expected_count: 141 which presses the buttons
+         //for blue button the distance of 5: move forward at 25 for 176 counts
+         //if blue pressed:
+         //move forward 7 inches: motor percent 25, expected_count: 246
+         //get up the longer ramp at 50 speed (trial and error to see proper speed for this robot)
+         //move forward at motor percent 50 for expected count 1044 
+         //move forward at motor percent 25 for expected count 774 
+         //if red pressed: 
+         //I know y'all dont want to do this but it allows the robot to be straight rather than at an angle 
+         //move forward 4 inches: 25,141
+         //turn right 90 degrees 0,25,235
+         //move forward 5 inches 25,176 count
+         //turn left 90 degrees 25,0,235
+         //move forward 7 inches: motor percent 25, expected_count: 246
+         //get up the longer ramp at 50 speed (trial and error to see proper speed for this robot)
+         //move forward at motor percent 50 for expected count 1044 
+         //move forward at motor percent 25 for expected count 774
+         
+         
+         
